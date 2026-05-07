@@ -1,0 +1,53 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#6c6fff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#6c6fff" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      .bg-outer { fill: #0d0d1a; }
+      .bg-inner { fill: #111128; }
+      .ring1 { stroke: #6c6fff; stroke-opacity: 0.15; }
+      .ring2 { stroke: #6c6fff; stroke-opacity: 0.2; }
+      .ring3 { stroke: #6c6fff; stroke-opacity: 0.3; }
+      .disc   { fill: #1a1a3e; }
+      .dollar { fill: #ffffff; }
+      .dot    { fill: #a78bfa; }
+
+      @media (prefers-color-scheme: light) {
+        .bg-outer { fill: #eef0ff; }
+        .bg-inner { fill: #e4e6ff; }
+        .ring1 { stroke: #5856d6; stroke-opacity: 0.18; }
+        .ring2 { stroke: #5856d6; stroke-opacity: 0.25; }
+        .ring3 { stroke: #5856d6; stroke-opacity: 0.4; }
+        .disc   { fill: #d4d7ff; }
+        .dollar { fill: #2d2b8f; }
+        .dot    { fill: #7c3aed; }
+      }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" class="bg-outer"/>
+  <rect x="60" y="60" width="392" height="392" rx="96" class="bg-inner"/>
+
+  <!-- Concentric rings -->
+  <circle cx="256" cy="256" r="160" fill="none" class="ring1" stroke-width="1.5"/>
+  <circle cx="256" cy="256" r="120" fill="none" class="ring2" stroke-width="1.5"/>
+  <circle cx="256" cy="256" r="80"  fill="none" class="ring3" stroke-width="2"/>
+
+  <!-- Center glow disc -->
+  <circle cx="256" cy="256" r="70" class="disc"/>
+  <circle cx="256" cy="256" r="70" fill="url(#glow)" opacity="0.6"/>
+
+  <!-- Dollar sign -->
+  <text x="256" y="305" text-anchor="middle"
+        font-family="-apple-system,Helvetica,sans-serif"
+        font-size="110" font-weight="800" class="dollar">$</text>
+
+  <!-- Accent dots on rings -->
+  <circle cx="256" cy="96"  r="5" class="dot"/>
+  <circle cx="416" cy="256" r="5" class="dot"/>
+  <circle cx="256" cy="416" r="5" class="dot"/>
+  <circle cx="96"  cy="256" r="5" class="dot"/>
+</svg>

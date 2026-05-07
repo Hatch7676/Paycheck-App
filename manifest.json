@@ -1,0 +1,11 @@
+{
+  "name": "Paycheck",
+  "short_name": "Paycheck",
+  "description": "Paycheck calculator",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "orientation": "portrait-primary",
+  "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

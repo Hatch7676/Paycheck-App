@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Paycheck">
+<meta name="theme-color" content="#0a0a0f" id="themeColor">
+<link rel="manifest" href="manifest.json">
+<title>Paycheck</title>
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#131318; --card:#1c1c24; --card2:#22222c;
+  --border:rgba(255,255,255,0.09); --accent:#6c6fff; --accent2:#a78bfa;
+  --green:#34d399; --amber:#fbbf24; --red:#f87171;
+  --text:#f0f0f8; --text2:#c8c8dc; --muted:#9090a8;
+}
+[data-theme="light"] {
+  --bg:#f5f5f7; --surface:#ffffff; --card:#ffffff; --card2:#f0f0f5;
+  --border:rgba(0,0,0,0.09); --accent:#5856d6; --accent2:#7c3aed;
+  --green:#059669; --amber:#d97706; --red:#dc2626;
+  --text:#111118; --text2:#333344; --muted:#6b6b80;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; height:-webkit-fill-available; overflow:hidden; }
+body {
+  font-family:-apple-system,'Helvetica Neue',sans-serif;
+  background:var(--bg); color:var(--text);
+  display:flex; flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  transition:background 0.25s,color 0.25s;
+}
+
+/* ── Header ── */
+header { flex-shrink:0; padding:14px 20px 8px; display:flex; align-items:center; justify-content:space-between; }
+.app-title {
+  font-size:26px; font-weight:800; letter-spacing:-0.5px;
+  background:linear-gradient(135deg,var(--text) 0%,var(--accent2) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.header-btns { display:flex; gap:8px; }
+.icon-btn {
+  width:36px; height:36px; border-radius:10px;
+  background:var(--card); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; cursor:pointer; transition:background 0.15s,transform 0.1s;
+  -webkit-user-select:none; user-select:none;
+}
+.icon-btn:active { background:var(--card2); transform:scale(0.93); }
+
+/* ── Tabs ── */
+.tabs { flex-shrink:0; display:flex; gap:6px; padding:0 16px 8px; }
+.tab {
+  flex:1; height:34px; border-radius:10px; border:none;
+  font-family:inherit; font-size:12px; font-weight:700;
+  cursor:pointer; color:var(--muted); background:transparent;
+  transition:background 0.15s,color 0.15s;
+}
+.tab.active { background:var(--card); color:var(--text); border:1px solid var(--border); }
+
+/* ── Scroll area ── */
+.scroll-area { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 16px 24px; }
+.scroll-area::-webkit-scrollbar { display:none; }
+
+/* ── Hero strip ── */
+.hero-strip {
+  background:var(--card); border-radius:18px; border:1px solid var(--border);
+  padding:14px 16px; margin-bottom:10px;
+}
+.hero-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:3px; }
+.hero-amt { font-size:44px; font-weight:800; letter-spacing:-2px; line-height:1.1; color:var(--text); }
+.hero-dollar { font-size:22px; font-weight:400; color:var(--muted); vertical-align:top; margin-top:8px; display:inline-block; }
+.chips { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.chip { font-size:10px; font-weight:700; padding:4px 10px; border-radius:20px; }
+.chip-b { background:rgba(108,111,255,0.13); color:var(--accent2); }
+.chip-g { background:rgba(52,211,153,0.13); color:var(--green); }
+
+/* ── Section label ── */
+.sec-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); padding:10px 2px 6px; }
+
+/* ── Input group ── */
+.input-group { display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+.input-row {
+  background:var(--card); border-radius:14px; border:1px solid var(--border);
+  padding:12px 14px; display:flex; align-items:center;
+}
+.input-label { font-size:13px; font-weight:600; color:var(--text); flex:1; }
+.input-box {
+  background:var(--card2); border:1.5px solid var(--border);
+  border-radius:10px; padding:6px 10px; width:90px;
+  text-align:right; font-family:inherit; font-size:15px;
+  font-weight:700; color:var(--text); outline:none;
+  transition:border-color 0.15s;
+}
+.input-box:focus { border-color:var(--accent); }
+
+/* ── Results cards ── */
+.result-card { background:var(--card); border-radius:16px; border:1px solid var(--border); overflow:hidden; margin-bottom:10px; }
+.result-row { display:flex; justify-content:space-between; align-items:center; padding:9px 14px; border-bottom:1px solid var(--border); }
+.result-row:last-child { border-bottom:none; }
+.result-row.subtotal { background:rgba(108,111,255,0.06); }
+.result-row.aftertax { background:rgba(52,211,153,0.07); }
+.result-label { font-size:12px; color:var(--muted); font-weight:500; }
+.result-label.bold { color:var(--text); font-weight:700; font-size:13px; }
+.result-val { font-size:13px; font-weight:700; color:var(--text); }
+.result-val.green { color:var(--green); font-size:15px; }
+.result-val.red { color:var(--red); }
+.result-val.muted { color:var(--muted); font-weight:500; }
+
+/* ── Notes ── */
+.notes-wrap { background:var(--card); border-radius:16px; border:1px solid var(--border); padding:12px 14px; margin-bottom:10px; }
+.notes-wrap textarea {
+  width:100%; background:none; border:none; outline:none;
+  font-family:inherit; font-size:13px; color:var(--text);
+  resize:none; line-height:1.6;
+}
+.notes-wrap textarea::placeholder { color:var(--muted); }
+
+/* ── Month End cards ── */
+.me-card { background:var(--card); border-radius:16px; border:1px solid var(--border); overflow:hidden; margin-bottom:10px; }
+.me-row { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--border); }
+.me-row:last-child { border-bottom:none; }
+.me-row.highlight { background:rgba(52,211,153,0.07); }
+.me-label { font-size:12px; color:var(--muted); font-weight:500; }
+.me-label.bold { color:var(--text); font-weight:700; font-size:13px; }
+.me-val { font-size:13px; font-weight:700; color:var(--text); }
+.me-val.green { color:var(--green); font-size:15px; }
+
+/* ── Modals ── */
+.modal-backdrop {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.65); z-index:200;
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  align-items:flex-end; justify-content:center;
+}
+.modal-backdrop.open { display:flex; }
+.modal-sheet {
+  position:relative;
+  background:var(--surface); border-radius:28px 28px 0 0;
+  padding:20px 20px; width:100%; max-width:480px;
+  border-top:1px solid var(--border);
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 22px);
+  animation:slideUp 0.28s cubic-bezier(0.32,0.72,0,1);
+  animation-fill-mode:forwards;
+  transition:background 0.25s;
+  max-height:88vh; overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
+}
+.modal-sheet::-webkit-scrollbar { display:none; }
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border); margin:0 auto 18px; }
+.modal-title { font-size:19px; font-weight:700; margin-bottom:4px; color:var(--text); display:flex; align-items:center; gap:8px; }
+.modal-sub { font-size:12px; color:var(--muted); margin-bottom:18px; }
+
+/* Settings groups */
+.s-divider { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); padding:10px 2px 6px; }
+.s-group { display:flex; flex-direction:column; gap:6px; margin-bottom:4px; }
+.s-row {
+  display:flex; align-items:center; background:var(--card);
+  border-radius:14px; border:1px solid var(--border); padding:11px 14px;
+}
+.s-label { font-size:13px; font-weight:600; color:var(--text); flex:1; }
+.s-box {
+  background:var(--card2); border:1.5px solid var(--border);
+  border-radius:10px; padding:5px 9px; width:86px;
+  text-align:right; font-family:inherit; font-size:14px;
+  font-weight:700; color:var(--text); outline:none; transition:border-color 0.15s;
+}
+.s-box:focus { border-color:var(--accent); }
+
+/* Theme toggle */
+.toggle { position:relative; width:48px; height:28px; flex-shrink:0; cursor:pointer; }
+.toggle input { opacity:0; width:0; height:0; position:absolute; }
+.toggle-track { position:absolute; inset:0; border-radius:14px; background:var(--card2); border:1px solid var(--border); transition:background 0.2s; }
+.toggle input:checked + .toggle-track { background:var(--accent); border-color:var(--accent); }
+.toggle-thumb { position:absolute; width:22px; height:22px; border-radius:11px; background:#fff; top:3px; left:3px; transition:transform 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.3); }
+.toggle input:checked ~ .toggle-thumb { transform:translateX(20px); }
+
+.btn { flex:1; height:50px; border-radius:14px; border:none; font-family:inherit; font-size:15px; font-weight:700; cursor:pointer; transition:transform 0.1s,opacity 0.1s; }
+.btn:active { transform:scale(0.97); opacity:0.85; }
+.btn-secondary { background:var(--card); color:var(--text); border:1px solid var(--border); }
+.btn-accent { flex:1; height:50px; border-radius:14px; border:none; font-family:inherit; font-size:15px;
+  font-weight:700; cursor:pointer; transition:transform 0.1s; background:var(--accent); color:#fff; }
+.btn-accent:active { transform:scale(0.97); }
+.modal-btns { display:flex; gap:10px; margin-top:14px; }
+
+/* In-sheet guard (replaces flaky touch + native confirm()) */
+.settings-guard {
+  display:none; position:absolute; inset:0; z-index:40;
+  background:rgba(0,0,0,0.5); align-items:center; justify-content:center;
+  padding:20px calc(12px + env(safe-area-inset-right)) 28px calc(12px + env(safe-area-inset-left));
+  border-radius:inherit; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+}
+.settings-guard.open { display:flex; }
+.settings-guard-card {
+  width:100%; max-width:300px;
+  background:var(--surface); border:1px solid var(--border); border-radius:18px;
+  padding:18px 16px 16px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.45);
+}
+.settings-guard-title { font-size:17px; font-weight:700; color:var(--text); margin-bottom:6px; }
+.settings-guard-msg { font-size:13px; color:var(--muted); margin-bottom:16px; line-height:1.45; }
+.settings-guard-btns { display:flex; gap:10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="app-title">Paycheck</div>
+  <div class="header-btns">
+    <div class="icon-btn" onclick="openModal('settingsModal')">⚙️</div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" id="tab-this" onclick="switchTab('this')">This Pay</button>
+  <button class="tab" id="tab-next" onclick="switchTab('next')">Next Pay</button>
+  <button class="tab" id="tab-month" onclick="switchTab('month')">Month End</button>
+</div>
+
+<!-- ── THIS PAY ── -->
+<div class="scroll-area" id="view-this">
+  <div class="hero-strip">
+    <div class="hero-label">After Tax</div>
+    <div class="hero-amt"><span class="hero-dollar">$</span><span id="t-net">0.00</span></div>
+    <div class="chips">
+      <div class="chip chip-b">Taxable $<span id="t-taxable">0</span></div>
+      <div class="chip chip-g">Above Min $<span id="t-abv">0</span></div>
+    </div>
+  </div>
+
+  <div class="sec-label">Inputs — hh.mm format</div>
+  <div class="input-group">
+    <div class="input-row"><span class="input-label">Total Hours</span><input class="input-box" type="number" id="t-hrs" value="0" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    <div class="input-row"><span class="input-label">Per Diem</span><input class="input-box" type="number" id="t-tpd" value="0" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    <div class="input-row"><span class="input-label">Per Diem - Tax Free</span><input class="input-box" type="number" id="t-pd" value="0" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    <div class="input-row"><span class="input-label">Critical Pay</span><input class="input-box" type="number" id="t-crit" value="0" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    <div class="input-row"><span class="input-label">Holiday</span><input class="input-box" type="number" id="t-hol" value="0" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    <div class="input-row"><span class="input-label">Charter</span><input class="input-box" type="number" id="t-chart" value="0" step="1" inputmode="decimal" oninput="calc()"></div>
+    <div class="input-row"><span class="input-label">Reimbursements</span><input class="input-box" type="number" id="t-reimb" value="0" step="0.01" inputmode="decimal" oninput="calc()"></div>
+  </div>
+
+  <div class="sec-label">Earnings</div>
+  <div class="result-card">
+    <div class="result-row"><span class="result-label">Base Pay (35hr)</span><span class="result-val" id="t-base">$0.00</span></div>
+    <div class="result-row"><span class="result-label">Holiday</span><span class="result-val" id="t-holp">$0.00</span></div>
+    <div class="result-row"><span class="result-label">Above 70hrs</span><span class="result-val" id="t-a70">$0.00</span></div>
+    <div class="result-row"><span class="result-label">Per Diem - Tax Free</span><span class="result-val muted" id="t-pdp">$0.00</span></div>
+    <div class="result-row"><span class="result-label">Per Diem</span><span class="result-val" id="t-tpdp">$0.00</span></div>
+    <div class="result-row"><span class="result-label">Critical Pay</span><span class="result-val" id="t-critp">$0.00</span></div>
+    <div class="result-row"><span class="result-label">Charter</span><span class="result-val" id="t-chartp">$0.00</span></div>
+    <div class="result-row subtotal"><span class="result-label bold">Taxable Total</span><span class="result-val" id="t-tot">$0.00</span></div>
+  </div>
+
+  <div class="sec-label">Deductions</div>
+  <div class="result-card">
+    <div class="result-row"><span class="result-label">Pre-Tax (HSA + Med + Dent)</span><span class="result-val red" id="t-pre">-$0.00</span></div>
+    <div class="result-row"><span class="result-label">Social Security (6.2%)</span><span class="result-val red" id="t-ss">-$0.00</span></div>
+    <div class="result-row"><span class="result-label">Medicare (1.45%)</span><span class="result-val red" id="t-med">-$0.00</span></div>
+    <div class="result-row"><span class="result-label">Federal Withholding</span><span class="result-val red" id="t-fed">-$0.00</span></div>
+    <div class="result-row"><span class="result-label">State Tax</span><span class="result-val red" id="t-st">-$0.00</span></div>
+    <div class="result-row"><span class="result-label">Post-Tax (401k + other)</span><span class="result-val red" id="t-post">-$0.00</span></div>
+    <div class="result-row aftertax">
+      <span class="result-label bold">After Tax</span>
+      <span class="result-val green" id="t-netb">$0.00</span>
+    </div>
+  </div>
+
+  <div class="sec-label">Notes</div>
+  <div class="notes-wrap">
+    <textarea id="t-notes" rows="4" placeholder="Notes for this pay period..."></textarea>
+  </div>
+</div>
+
+<!-- ── NEXT PAY ── -->
+<div class="scroll-area" id="view-next" style="display:none">
+  <div class="hero-strip">
+    <div class="hero-label">After Tax</div>
+    <div class="hero-amt"><span class="hero-dollar">$</span><span id="n-net">0.00</span></div>
+    <div class="chips">
+      <div class="chip chip-b">Taxable $<span id="n-taxable">0</span></div>
+      <div class="chip chip-g">Above Min $<span id="n-abv">0</span></div>
+    </div>
+  </div>
+
+  <div class="sec-label">Inputs — hh.mm format</div>
+  <div class="input-group">
+    <div class="input-row"><span class="input-label">Total Hours</span><input class="input-box" type="number" id="n-hrs" value="0" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    <div class="input-row"><span class="input-label">Per Diem</span><input class="input-box" type="number" id="n-tpd" value="0" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    <div class="input-row"><span class="input-label">Per Diem - Tax Free</span><input class="input-box" type="number" id="n-pd" value="0" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    <div class="input-row"><span class="input-label">Critical Pay</span><input class="input-box" type="number" id="n-crit" value="0" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    <div class="input-row"><span class="input-label">Holiday</span><input class="input-box" type="number" id="n-hol" value="0" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    <div class="input-row"><span class="input-label">Charter</span><input class="input-box" type="number" id="n-chart" value="0" step="1" inputmode="decimal" oninput="calc()"></div>
+    <div class="input-row"><span class="input-label">Reimbursements</span><input class="input-box" type="number" id="n-reimb" value="0" step="0.01" inputmode="decimal" oninput="calc()"></div>
+  </div>
+
+  <div class="sec-label">Earnings</div>
+  <div class="result-card">
+    <div class="result-row"><span class="result-label">Base Pay (35hr)</span><span class="result-val" id="n-base">$0.00</span></div>
+    <div class="result-row"><span class="result-label">Holiday</span><span class="result-val" id="n-holp">$0.00</span></div>
+    <div class="result-row"><span class="result-label">Above 70hrs</span><span class="result-val" id="n-a70">$0.00</span></div>
+    <div class="result-row"><span class="result-label">Per Diem - Tax Free</span><span class="result-val muted" id="n-pdp">$0.00</span></div>
+    <div class="result-row"><span class="result-label">Per Diem</span><span class="result-val" id="n-tpdp">$0.00</span></div>
+    <div class="result-row"><span class="result-label">Critical Pay</span><span class="result-val" id="n-critp">$0.00</span></div>
+    <div class="result-row"><span class="result-label">Charter</span><span class="result-val" id="n-chartp">$0.00</span></div>
+    <div class="result-row subtotal"><span class="result-label bold">Taxable Total</span><span class="result-val" id="n-tot">$0.00</span></div>
+  </div>
+
+  <div class="sec-label">Deductions</div>
+  <div class="result-card">
+    <div class="result-row"><span class="result-label">Pre-Tax (HSA + Med + Dent)</span><span class="result-val red" id="n-pre">-$0.00</span></div>
+    <div class="result-row"><span class="result-label">Social Security (6.2%)</span><span class="result-val red" id="n-ss">-$0.00</span></div>
+    <div class="result-row"><span class="result-label">Medicare (1.45%)</span><span class="result-val red" id="n-med">-$0.00</span></div>
+    <div class="result-row"><span class="result-label">Federal Withholding</span><span class="result-val red" id="n-fed">-$0.00</span></div>
+    <div class="result-row"><span class="result-label">State Tax</span><span class="result-val red" id="n-st">-$0.00</span></div>
+    <div class="result-row"><span class="result-label">Post-Tax (401k + other)</span><span class="result-val red" id="n-post">-$0.00</span></div>
+    <div class="result-row aftertax">
+      <span class="result-label bold">After Tax</span>
+      <span class="result-val green" id="n-netb">$0.00</span>
+    </div>
+  </div>
+
+  <div class="sec-label">Notes</div>
+  <div class="notes-wrap">
+    <textarea id="n-notes" rows="4" placeholder="Notes for next pay period..."></textarea>
+  </div>
+</div>
+
+<!-- ── MONTH END ── -->
+<div class="scroll-area" id="view-month" style="display:none">
+  <div class="hero-strip">
+    <div class="hero-label">Month End Reference</div>
+    <div class="hero-amt"><span class="hero-dollar">$</span>2,345.00</div>
+    <div class="chips">
+      <div class="chip chip-b">Fixed minimum target</div>
+    </div>
+  </div>
+
+  <div class="sec-label">Combined Paychecks</div>
+  <div class="me-card">
+    <div class="me-row"><span class="me-label">This Pay — After Tax</span><span class="me-val" id="me-this">$0.00</span></div>
+    <div class="me-row"><span class="me-label">Next Pay — After Tax</span><span class="me-val" id="me-next">$0.00</span></div>
+    <div class="me-row highlight"><span class="me-label bold">Combined Total</span><span class="me-val green" id="me-combined">$0.00</span></div>
+  </div>
+
+  <div class="sec-label">Above Minimum</div>
+  <div class="me-card">
+    <div class="me-row"><span class="me-label">This Pay vs $2,345</span><span class="me-val green" id="me-this-abv">+$0.00</span></div>
+    <div class="me-row"><span class="me-label">Next Pay vs $2,345</span><span class="me-val green" id="me-next-abv">+$0.00</span></div>
+  </div>
+
+  <div class="sec-label">Notes</div>
+  <div class="notes-wrap">
+    <textarea id="m-notes" rows="5" placeholder="Month end notes, awards, pay changes..."></textarea>
+  </div>
+</div>
+
+<!-- ── Settings Modal ── -->
+<div class="modal-backdrop" id="settingsModal" onclick="backdropTap(event,'settingsModal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚙️ Settings</div>
+    <div class="modal-sub">Adjust pay rate, deductions, and tax values</div>
+
+    <div class="s-divider">Pay</div>
+    <div class="s-group">
+      <div class="s-row"><span class="s-label">Pay Rate ($/hr)</span><input class="s-box" type="number" id="s-rate" value="105" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    </div>
+
+    <div class="s-divider">Pre-Tax Deductions</div>
+    <div class="s-group">
+      <div class="s-row"><span class="s-label">HSA</span><input class="s-box" type="number" id="s-hsa" value="100" step="0.01" inputmode="decimal" oninput="calc()"></div>
+      <div class="s-row"><span class="s-label">Medical Pre-Tax</span><input class="s-box" type="number" id="s-med" value="118.01" step="0.01" inputmode="decimal" oninput="calc()"></div>
+      <div class="s-row"><span class="s-label">Dental Pre-Tax</span><input class="s-box" type="number" id="s-dent" value="6.84" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    </div>
+
+    <div class="s-divider">FICA &amp; Tax</div>
+    <div class="s-group">
+      <div class="s-row"><span class="s-label">Imputed Term Life</span><input class="s-box" type="number" id="s-imp" value="2.80" step="0.01" inputmode="decimal" oninput="calc()"></div>
+      <div class="s-row"><span class="s-label">Fed Std Adjustment</span><input class="s-box" type="number" id="s-adj" value="671" step="1" inputmode="decimal" oninput="calc()"></div>
+      <div class="s-row"><span class="s-label">Social Security %</span><input class="s-box" type="number" id="s-ss" value="6.2" step="0.1" inputmode="decimal" oninput="calc()"></div>
+      <div class="s-row"><span class="s-label">Medicare %</span><input class="s-box" type="number" id="s-medicare" value="1.45" step="0.01" inputmode="decimal" oninput="calc()"></div>
+      <div class="s-row"><span class="s-label">State Tax %</span><input class="s-box" type="number" id="s-state" value="4.5" step="0.1" inputmode="decimal" oninput="calc()"></div>
+    </div>
+
+    <div class="s-divider">Post-Tax Deductions</div>
+    <div class="s-group">
+      <div class="s-row"><span class="s-label">Post-Tax % (401k etc)</span><input class="s-box" type="number" id="s-pct" value="6" step="0.1" inputmode="decimal" oninput="calc()"></div>
+      <div class="s-row"><span class="s-label">Post-Tax Fixed</span><input class="s-box" type="number" id="s-pfixed" value="19.56" step="0.01" inputmode="decimal" oninput="calc()"></div>
+    </div>
+
+    <div class="s-divider">Appearance</div>
+    <div class="s-group">
+      <div class="s-row">
+        <span class="s-label" id="themeLabel">Dark Mode</span>
+        <label class="toggle" onclick="event.stopPropagation()">
+          <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>
+
+    <div class="settings-guard" id="settingsEditGuard" hidden aria-hidden="true">
+      <div class="settings-guard-card" role="dialog" aria-modal="true" aria-labelledby="settingsGuardTitle">
+        <p class="settings-guard-title" id="settingsGuardTitle">Edit this value?</p>
+        <p class="settings-guard-msg">Deduction or tax assumptions will change.</p>
+        <div class="settings-guard-btns">
+          <button type="button" class="btn btn-secondary" id="settingsGuardCancel">Cancel</button>
+          <button type="button" class="btn btn-accent" id="settingsGuardOk">Continue</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="closeModal('settingsModal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+const KEY = 'paycheck_v1';
+
+/** Settings field queued for editing after Continue (see overlay guard below). */
+let pendingSettingsGuardInput = null;
+/** Short suppress window after Cancel to ignore rebound focus/click on guarded input. */
+let settingsGuardSuppressUntil = 0;
+
+function dismissSettingsEditGuard(focusPayRate) {
+  pendingSettingsGuardInput = null;
+  settingsGuardSuppressUntil = Date.now() + 550;
+  const g = document.getElementById('settingsEditGuard');
+  if (!g) return;
+  g.classList.remove('open');
+  g.hidden = true;
+  g.setAttribute('aria-hidden', 'true');
+  if (focusPayRate)
+    queueMicrotask(() => {
+      const r = document.getElementById('s-rate');
+      try { r?.focus({ preventScroll: true }); } catch (_) { r?.focus(); }
+    });
+}
+
+function approveSettingsEditGuard() {
+  const inp = pendingSettingsGuardInput;
+  dismissSettingsEditGuard(false);
+  if (!(inp instanceof HTMLInputElement)) return;
+  if (!document.getElementById('settingsModal')?.classList.contains('open')) return;
+  inp.dataset.sgBypass = '1';
+  queueMicrotask(() => {
+    try { inp.focus({ preventScroll: true }); } catch (_) { inp.focus(); }
+    try { inp.select(); } catch (_) {}
+  });
+}
+
+function loadState() {
+  try { const r=localStorage.getItem(KEY); if(r) return JSON.parse(r); } catch(e){}
+  return {};
+}
+function saveState() {
+  const st = {
+    tHrs:   v('t-hrs'),   tTpd:  v('t-tpd'),  tPd:    v('t-pd'),
+    tCrit:  v('t-crit'),  tHol:  v('t-hol'),  tChart: v('t-chart'), tReimb: v('t-reimb'),
+    nHrs:   v('n-hrs'),   nTpd:  v('n-tpd'),  nPd:    v('n-pd'),
+    nCrit:  v('n-crit'),  nHol:  v('n-hol'),  nChart: v('n-chart'), nReimb: v('n-reimb'),
+    tNotes: document.getElementById('t-notes').value,
+    nNotes: document.getElementById('n-notes').value,
+    mNotes: document.getElementById('m-notes').value,
+    sRate:  v('s-rate'),  sHsa:  v('s-hsa'),  sMed:   v('s-med'),
+    sDent:  v('s-dent'),  sImp:  v('s-imp'),  sAdj:   v('s-adj'),
+    sSs:    v('s-ss'),    sMedicare: v('s-medicare'),
+    sState: v('s-state'), sPct:  v('s-pct'),  sPfixed:v('s-pfixed'),
+    theme:  document.documentElement.getAttribute('data-theme')||'dark'
+  };
+  try { localStorage.setItem(KEY, JSON.stringify(st)); } catch(e){}
+}
+
+function restoreState() {
+  const st = loadState();
+  if (!st || !st.sRate) return;
+  const map = {
+    't-hrs':st.tHrs,'t-tpd':st.tTpd,'t-pd':st.tPd,'t-crit':st.tCrit,
+    't-hol':st.tHol,'t-chart':st.tChart,'t-reimb':st.tReimb,
+    'n-hrs':st.nHrs,'n-tpd':st.nTpd,'n-pd':st.nPd,'n-crit':st.nCrit,
+    'n-hol':st.nHol,'n-chart':st.nChart,'n-reimb':st.nReimb,
+    's-rate':st.sRate,'s-hsa':st.sHsa,'s-med':st.sMed,'s-dent':st.sDent,
+    's-imp':st.sImp,'s-adj':st.sAdj,'s-ss':st.sSs,'s-medicare':st.sMedicare,
+    's-state':st.sState,'s-pct':st.sPct,'s-pfixed':st.sPfixed
+  };
+  Object.entries(map).forEach(([id,val])=>{ if(val!==undefined) document.getElementById(id).value=val; });
+  if(st.tNotes) document.getElementById('t-notes').value=st.tNotes;
+  if(st.nNotes) document.getElementById('n-notes').value=st.nNotes;
+  if(st.mNotes) document.getElementById('m-notes').value=st.mNotes;
+  applyTheme(st.theme||'dark');
+}
+
+function v(id) { return document.getElementById(id).value; }
+function n(id) { return parseFloat(v(id))||0; }
+
+function hhmm(val) {
+  const raw = parseFloat(val)||0;
+  if (raw===0) return 0;
+  return Math.floor(raw) + Math.round((raw%1)*100)/60;
+}
+
+function fedTax(incomeBase) {
+  const adj = n('s-adj');
+  const ann = Math.max(0, incomeBase-adj)*24;
+  const tax =
+    Math.max(0,Math.min(ann,12400))*0.10+
+    Math.max(0,Math.min(ann,50400)-12400)*0.12+
+    Math.max(0,Math.min(ann,105700)-50400)*0.22+
+    Math.max(0,Math.min(ann,201775)-105700)*0.24+
+    Math.max(0,Math.min(ann,256225)-201775)*0.32+
+    Math.max(0,Math.min(ann,640600)-256225)*0.35+
+    Math.max(0,ann-640600)*0.37;
+  return Math.round((tax/24+50)*100)/100;
+}
+
+function calcPay(p) {
+  const rate    = n('s-rate');
+  const hsa     = n('s-hsa'), med=n('s-med'), dent=n('s-dent');
+  const imp     = n('s-imp');
+  const ssRate  = n('s-ss')/100;
+  const medRate = n('s-medicare')/100;
+  const stRate  = n('s-state')/100;
+  const pct     = n('s-pct')/100;
+  const pfixed  = n('s-pfixed');
+  const MIN     = 2345;
+
+  const hrs   = hhmm(v(p+'-hrs'));
+  const tpd   = hhmm(v(p+'-tpd'));
+  const pd    = hhmm(v(p+'-pd'));
+  const crit  = hhmm(v(p+'-crit'));
+  const hol   = hhmm(v(p+'-hol'));
+  const chart = parseFloat(v(p+'-chart'))||0;
+  const reimb = parseFloat(v(p+'-reimb'))||0;
+
+  const base     = 35*rate;
+  const holPay   = hol>0 ? hol*(rate/2) : 0;
+  const a70      = hrs>0 ? Math.max(0,hrs-70)*rate : 0;
+  const pdPay    = pd>0 ? pd*2.25 : 0;
+  const tpdPay   = tpd>0 ? tpd*2.25 : 0;
+  const critPay  = crit>0 ? crit*(rate*2) : 0;
+  const chartPay = chart*rate*0.1;
+
+  const taxTotal = base+holPay+a70+tpdPay+critPay+chartPay;
+  const preTax   = hsa+med+dent;
+  const ficaBase = taxTotal-preTax+imp;
+  const incBase  = taxTotal-preTax;
+  const ss       = Math.round(ficaBase*ssRate*100)/100;
+  const medicare = Math.round(ficaBase*medRate*100)/100;
+  const fedW     = fedTax(incBase);
+  const stateTax = Math.round(incBase*stRate*100)/100;
+  const taxes    = ss+medicare+fedW+stateTax;
+  const postTax  = Math.round(taxTotal*pct*100)/100+pfixed;
+  const afterTax = (taxTotal-preTax-taxes-postTax)+pdPay+reimb;
+  const aboveMin = afterTax-MIN;
+
+  const f  = val => '$'+val.toFixed(2);
+  const fr = val => '-$'+Math.abs(val).toFixed(2);
+
+  document.getElementById(p+'-base').textContent   = f(base);
+  document.getElementById(p+'-holp').textContent   = f(holPay);
+  document.getElementById(p+'-a70').textContent    = f(a70);
+  document.getElementById(p+'-pdp').textContent    = f(pdPay);
+  document.getElementById(p+'-tpdp').textContent   = f(tpdPay);
+  document.getElementById(p+'-critp').textContent  = f(critPay);
+  document.getElementById(p+'-chartp').textContent = f(chartPay);
+  document.getElementById(p+'-tot').textContent    = f(taxTotal);
+  document.getElementById(p+'-pre').textContent    = fr(preTax);
+  document.getElementById(p+'-ss').textContent     = fr(ss);
+  document.getElementById(p+'-med').textContent    = fr(medicare);
+  document.getElementById(p+'-fed').textContent    = fr(fedW);
+  document.getElementById(p+'-st').textContent     = fr(stateTax);
+  document.getElementById(p+'-post').textContent   = fr(postTax);
+  document.getElementById(p+'-netb').textContent   = f(afterTax);
+  document.getElementById(p+'-net').textContent    = afterTax.toFixed(2);
+  document.getElementById(p+'-taxable').textContent= taxTotal.toFixed(0);
+  document.getElementById(p+'-abv').textContent    = '+$'+aboveMin.toFixed(0);
+
+  return { afterTax, aboveMin };
+}
+
+function calc() {
+  const t = calcPay('t');
+  const n2 = calcPay('n');
+  const combined = t.afterTax+n2.afterTax;
+  document.getElementById('me-this').textContent    = '$'+t.afterTax.toFixed(2);
+  document.getElementById('me-next').textContent    = '$'+n2.afterTax.toFixed(2);
+  document.getElementById('me-combined').textContent= '$'+combined.toFixed(2);
+  document.getElementById('me-this-abv').textContent= '+$'+t.aboveMin.toFixed(2);
+  document.getElementById('me-next-abv').textContent= '+$'+n2.aboveMin.toFixed(2);
+  saveState();
+}
+
+function switchTab(tab) {
+  ['this','next','month'].forEach(t=>{
+    document.getElementById('view-'+t).style.display = t===tab?'block':'none';
+    document.getElementById('tab-'+t).className = 'tab'+(t===tab?' active':'');
+  });
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme==='light'?'light':'dark');
+  const isDark = theme!=='light';
+  document.getElementById('themeLabel').textContent = isDark?'Dark Mode':'Light Mode';
+  document.getElementById('themeToggle').checked    = isDark;
+  document.getElementById('themeColor').content     = isDark?'#0a0a0f':'#f5f5f7';
+}
+function toggleTheme() {
+  const isDark = document.getElementById('themeToggle').checked;
+  applyTheme(isDark?'dark':'light');
+  saveState();
+}
+
+function resetModalSheet(backdropEl) {
+  const sheet = backdropEl && backdropEl.querySelector('.modal-sheet');
+  if (!sheet) return;
+  sheet.style.transition = '';
+  sheet.style.transform = '';
+  sheet.style.opacity = '';
+  sheet.style.animation = '';
+  backdropEl.style.transition = '';
+  backdropEl.style.background = '';
+}
+
+let settingsSheetUnlockTimer = 0;
+function openModal(id) {
+  const el = document.getElementById(id);
+  resetModalSheet(el);
+  el.classList.add('open');
+  if (id === 'settingsModal') {
+    dismissSettingsEditGuard(false);
+    clearTimeout(settingsSheetUnlockTimer);
+    settingsSheetUnlockTimer = setTimeout(() => {
+      settingsSheetUnlockTimer = 0;
+      const bd = document.getElementById('settingsModal');
+      const sh = bd && bd.querySelector('.modal-sheet');
+      if (!bd || !bd.classList.contains('open') || !sh) return;
+      sh.style.animation = 'none';
+      sh.style.transform = 'translateY(0)';
+      sh.style.opacity = '1';
+    }, 310);
+  }
+}
+function closeModal(id) {
+  if (id === 'settingsModal') {
+    clearTimeout(settingsSheetUnlockTimer);
+    settingsSheetUnlockTimer = 0;
+    dismissSettingsEditGuard(false);
+  }
+  const el = document.getElementById(id);
+  el.classList.remove('open');
+  resetModalSheet(el);
+}
+function backdropTap(e,id) { if(e.target===document.getElementById(id)) closeModal(id); }
+
+(function initSettingsSwipeDismiss(){
+  const backdrop = document.getElementById('settingsModal');
+  const sheet = backdrop && backdrop.querySelector('.modal-sheet');
+  if (!sheet) return;
+
+  let startY = 0;
+  let pullDy = 0;
+  let active = false;
+  let dragging = false;
+  /** Gesture only allowed from top of scroll (pull-down closes). */
+  let armed = false;
+  /** After slideUp finishes, strip animation so inline transform can drag the sheet (Safari / compositor). */
+  function finishSheetEnterAnimation() {
+    if (!backdrop.classList.contains('open')) return;
+    sheet.style.animation = 'none';
+    sheet.style.transform = 'translateY(0)';
+    sheet.style.opacity = '1';
+  }
+  sheet.addEventListener('animationend', e => {
+    if (e.target !== sheet) return;
+    const raw = ((e.animationName || '')+'').split(',')[0].replace(/^-webkit-/i,'').trim().toLowerCase();
+    if (raw !== 'slideup') return;
+    finishSheetEnterAnimation();
+  });
+
+  /** maxTouchPoints only — `ontouchstart in window` is often true on desktop Chrome without a touchscreen. */
+  const preferTouch = (navigator.maxTouchPoints || 0) > 0;
+
+  function isInteractive(el) {
+    return !!(/** @type {HTMLElement} */(el).closest('button, input, textarea, label'));
+  }
+
+  function atTop() {
+    return sheet.scrollTop <= 8;
+  }
+
+  function pullThreshold() {
+    return Math.min(140, Math.max(72, window.innerHeight * 0.2));
+  }
+
+  /** While dragging/swiping shut, opacity never dips below this (stays visibly “there”). */
+  const SHEET_OPACITY_MIN = 0.57;
+  /** No fade until the sheet has moved down by this amount (px). */
+  function opacityFadeDeadzonePx() {
+    return Math.min(160, Math.max(100, window.innerHeight * 0.26));
+  }
+  /** After the dead zone, fading to SHEET_OPACITY_MIN spans this extra drag distance. */
+  function opacityFadeRangePx() {
+    return Math.max(260, window.innerHeight * 0.5);
+  }
+
+  function applyPull(dy) {
+    sheet.style.animation = 'none';
+    sheet.style.transition = 'none';
+    sheet.style.transform = `translateY(${dy}px)`;
+    const dz = opacityFadeDeadzonePx();
+    const range = opacityFadeRangePx();
+    const past = Math.max(0, dy - dz);
+    const p = Math.min(past / range, 1);
+    const opacity = 1 - p * (1 - SHEET_OPACITY_MIN);
+    sheet.style.opacity = String(opacity);
+    const damp = dy / (window.innerHeight * 0.55 || 400);
+    const a = Math.max(0, 0.65 * (1 - Math.min(damp, 1)));
+    backdrop.style.background = `rgba(0,0,0,${a})`;
+  }
+
+  function endPull() {
+    if (!dragging) return;
+    dragging = false;
+    const thresh = pullThreshold();
+    const shouldClose = pullDy >= thresh && active;
+
+    if (shouldClose) {
+      backdrop.style.transition = 'background 0.22s ease';
+      sheet.style.transition =
+        'transform 0.24s cubic-bezier(0.32,0.72,0,1), opacity 0.24s cubic-bezier(0.32,0.72,0,1)';
+      sheet.style.transform = 'translateY(100%)';
+      sheet.style.opacity = String(SHEET_OPACITY_MIN);
+      backdrop.style.background = 'rgba(0,0,0,0)';
+      setTimeout(() => closeModal('settingsModal'), 240);
+      pullDy = 0;
+      active = false;
+      armed = false;
+      return;
+    }
+
+    backdrop.style.transition = 'background 0.2s ease';
+    sheet.style.transition =
+      'transform 0.2s cubic-bezier(0.32,0.72,0,1), opacity 0.2s cubic-bezier(0.32,0.72,0,1)';
+    sheet.style.transform = 'translateY(0)';
+    sheet.style.opacity = '1';
+    backdrop.style.background = '';
+    sheet.addEventListener('transitionend', function te(ev) {
+      if (ev.propertyName !== 'transform') return;
+      sheet.removeEventListener('transitionend', te);
+      resetModalSheet(backdrop);
+    }, { once: true });
+    pullDy = 0;
+    active = false;
+    armed = false;
+  }
+
+  function beginGesture(clientY, target) {
+    if (isInteractive(target)) {
+      armed = false;
+      return;
+    }
+    startY = clientY;
+    armed = atTop();
+    dragging = false;
+    pullDy = 0;
+    active = false;
+  }
+
+  function moveGesture(clientY, ev) {
+    const dy = clientY - startY;
+    if (sheet.scrollTop > 8 && dy <= 0) return;
+    if (sheet.scrollTop > 8) return;
+    if (!armed || dy <= 0) return;
+    active = true;
+    dragging = true;
+    ev.preventDefault();
+    pullDy = dy;
+    applyPull(dy);
+  }
+
+  if (preferTouch) {
+    sheet.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) return;
+      beginGesture(e.touches[0].clientY, e.target);
+    }, { passive: true });
+
+    sheet.addEventListener('touchmove', e => {
+      if (e.touches.length !== 1) return;
+      moveGesture(e.touches[0].clientY, e);
+    }, { passive: false });
+
+    sheet.addEventListener('touchend', () => endPull(), { passive: true });
+    sheet.addEventListener('touchcancel', () => endPull(), { passive: true });
+  }
+
+  if (window.matchMedia('(pointer: fine)').matches) {
+    let mouseDn = false;
+    sheet.addEventListener('pointerdown', e => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      mouseDn = true;
+      beginGesture(e.clientY, e.target);
+    });
+    sheet.addEventListener('pointermove', e => {
+      if (!mouseDn || e.pointerType !== 'mouse') return;
+      if (!(e.buttons & 1)) return;
+      moveGesture(e.clientY, e);
+    }, { passive: false });
+    sheet.addEventListener('pointerup', e => {
+      if (e.pointerType !== 'mouse') return;
+      mouseDn = false;
+      endPull();
+    });
+    sheet.addEventListener('pointercancel', e => {
+      if (e.pointerType !== 'mouse') return;
+      mouseDn = false;
+      endPull();
+    });
+    backdrop.addEventListener('pointerleave', e => {
+      if (!mouseDn || e.pointerType !== 'mouse') return;
+      mouseDn = false;
+      endPull();
+    });
+  }
+})();
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const g = document.getElementById('settingsEditGuard');
+  if (g && g.classList.contains('open')) {
+    e.preventDefault();
+    dismissSettingsEditGuard(false);
+    return;
+  }
+  document.querySelectorAll('.modal-backdrop.open').forEach(m => { if (m.id) closeModal(m.id); });
+});
+document.querySelectorAll('textarea').forEach(ta=>{
+  ta.addEventListener('input', saveState);
+});
+
+document.addEventListener('focusin', e => {
+  const t = /** @type {EventTarget|null} */ (e.target);
+  if (!(t instanceof HTMLInputElement)) return;
+  if (!t.matches('input.input-box, input.s-box')) return;
+  requestAnimationFrame(() => {
+    try { t.select(); } catch (_) {}
+  });
+});
+
+document.addEventListener('focusout', e => {
+  const el = /** @type {EventTarget|null} */ (e.target);
+  if (!(el instanceof HTMLInputElement)) return;
+  if (!el.matches('input.input-box, input.s-box')) return;
+  if (el.value.trim() !== '') return;
+  el.value = '0';
+  calc();
+});
+
+(function initSettingsEditGuardOverlay(){
+  const modal = document.getElementById('settingsModal');
+  const overlay = document.getElementById('settingsEditGuard');
+  const btnOk = document.getElementById('settingsGuardOk');
+  const btnCancel = document.getElementById('settingsGuardCancel');
+  if (!modal || !overlay || !btnOk || !btnCancel) return;
+
+  function isGuardedSettingInput(el) {
+    return !!(el instanceof HTMLInputElement &&
+      el.matches('input.s-box') &&
+      el.id !== 's-rate');
+  }
+
+  function openGuard(inp) {
+    if (!modal.classList.contains('open')) return;
+    if (overlay.classList.contains('open')) return;
+    pendingSettingsGuardInput = inp;
+    overlay.hidden = false;
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => {
+      try { btnCancel.focus({ preventScroll: true }); } catch (_) { btnCancel.focus(); }
+    });
+  }
+
+  btnOk.addEventListener('click', approveSettingsEditGuard);
+  btnCancel.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    dismissSettingsEditGuard(false);
+  });
+
+  modal.addEventListener('pointerdown', e => {
+    if (!modal.classList.contains('open')) return;
+    if (Date.now() < settingsGuardSuppressUntil) return;
+    const raw = /** @type {EventTarget|null} */ (e.target);
+    if (!(raw instanceof Element) || raw.closest('#settingsEditGuard')) return;
+
+    let inp = /** @type {HTMLInputElement|null} */ (raw.closest('input.s-box'));
+    if (!isGuardedSettingInput(inp)) return;
+    inp = /** @type {HTMLInputElement} */ (inp);
+
+    if (inp.dataset.sgBypass === '1') {
+      delete inp.dataset.sgBypass;
+      return;
+    }
+
+    if (overlay.classList.contains('open')) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    openGuard(inp);
+  }, true);
+
+  modal.addEventListener(
+    'touchstart',
+    e => {
+      if (!modal.classList.contains('open')) return;
+      if (Date.now() < settingsGuardSuppressUntil) return;
+      const raw = /** @type {EventTarget|null} */ (e.target);
+      if (!(raw instanceof Element) || raw.closest('#settingsEditGuard')) return;
+
+      let inp = /** @type {HTMLInputElement|null} */ (raw.closest('input.s-box'));
+      if (!isGuardedSettingInput(inp)) return;
+      inp = /** @type {HTMLInputElement} */ (inp);
+
+      if (inp.dataset.sgBypass === '1') {
+        delete inp.dataset.sgBypass;
+        return;
+      }
+
+      if (overlay.classList.contains('open')) return;
+      e.preventDefault();
+      openGuard(inp);
+    },
+    { capture: true, passive: false },
+  );
+
+  modal.addEventListener('focusin', e => {
+    const el = /** @type {EventTarget|null} */ (e.target);
+    if (!(el instanceof HTMLElement)) return;
+
+    if (Date.now() < settingsGuardSuppressUntil) {
+      if (isGuardedSettingInput(el)) el.blur();
+      return;
+    }
+
+    if (overlay.classList.contains('open')) {
+      if (!el.closest('#settingsEditGuard')) {
+        queueMicrotask(() => {
+          try { btnCancel.focus({ preventScroll: true }); } catch (_) { btnCancel.focus(); }
+        });
+      }
+      return;
+    }
+
+    if (!(el instanceof HTMLInputElement)) return;
+    if (!isGuardedSettingInput(el)) return;
+    if (el.dataset.sgBypass === '1') {
+      delete el.dataset.sgBypass;
+      return;
+    }
+    el.blur();
+    openGuard(el);
+  });
+})();
+
+applyTheme('dark');
+restoreState();
+calc();
+</script>
+</body>
+</html>
